@@ -1,14 +1,22 @@
 package com.example.launcher;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 
 public class LauncherController {
     @FXML
-    private Label welcomeText;
+    private TextField pathToWorld;
+    @FXML
+    private TextField pathToGame;
+    @FXML
+    private TextField pathToCloud;
 
     @FXML
-    protected void onButtonClick() {
-        welcomeText.setText("Welcome to launcher of Synchronization System of Terraria Worlds based on JavaFX!");
+    protected void onButtonBecomeHost() {
+
+    }
+    @FXML
+    protected void onButtonLaunchGame() {
+
     }
 }

@@ -2,15 +2,25 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<VBox alignment="CENTER_LEFT" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.example.launcher.LauncherController">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
 
-    <Label fx:id="welcomeText"/>
-    <Button text="Click me!" onAction="#onButtonClick"/>
+    <Label text="Путь до файла мира:"/>
+    <TextField fx:id="pathToWorld"/>
+    <Label text="Путь до папки Terraria:"/>
+    <TextField fx:id="pathToGame"/>
+    <Label text="Ссылка на диск:"/>
+    <TextField fx:id="pathToCloud"/>
+    <HBox>
+        <Button HBox.hgrow="ALWAYS" maxWidth="Infinity" text="Стать хостом" onAction="#onButtonBecomeHost"/>
+        <Button HBox.hgrow="ALWAYS" maxWidth="Infinity" text="Запуск Terraria" onAction="#onButtonLaunchGame"/>
+    </HBox>
 </VBox>
