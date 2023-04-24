@@ -14,6 +14,8 @@
     </padding>
 
     <Label fx:id="log" text="LOG: "/>
+    <Label text="Token:"/>
+    <TextField fx:id="token"/>
     <Label text="Путь до файла мира:"/>
     <TextField fx:id="pathToWorld"/>
     <Label text="Путь до папки Terraria:"/>
