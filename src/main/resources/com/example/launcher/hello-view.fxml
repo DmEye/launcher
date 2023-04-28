@@ -14,6 +14,8 @@
     </padding>
 
     <Label fx:id="log" text="LOG: "/>
+    <Label text="Прозвище:"/>
+    <TextField fx:id="nickName"/>
     <Label text="Token:"/>
     <TextField fx:id="token"/>
     <Label text="Путь до файла мира:"/>
