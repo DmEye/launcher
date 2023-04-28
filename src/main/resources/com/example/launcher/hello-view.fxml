@@ -20,8 +20,6 @@
     <TextField fx:id="pathToWorld"/>
     <Label text="Путь до папки Terraria:"/>
     <TextField fx:id="pathToGame"/>
-    <Label text="Ссылка на диск:"/>
-    <TextField fx:id="pathToCloud"/>
     <HBox>
         <Button HBox.hgrow="ALWAYS" maxWidth="Infinity" text="Стать хостом" onAction="#onButtonBecomeHost"/>
         <Button HBox.hgrow="ALWAYS" maxWidth="Infinity" text="Запуск Terraria" onAction="#onButtonLaunchGame"/>

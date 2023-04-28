@@ -17,10 +17,9 @@ public class LauncherController {
     private TextField token;
     @FXML
     private TextField pathToGame;
-    @FXML
-    private TextField pathToCloud;
     private Process game = null;
     private final String link_to_download = "https://cloud-api.yandex.net/v1/disk/resources/download";
+    private final String link_to_upload = "https://cloud-api.yandex.net/v1/disk/resources/upload";
     private final Gson parser = new Gson();
     @FXML
     protected void onButtonBecomeHost() {
@@ -28,7 +27,11 @@ public class LauncherController {
             if (game == null) {
                 // Скачать hosts.json
                 URL downloadLink = this.getLink(this.link_to_download, "hosts.json");
-                log.setText(downloadLink.toString());
+                if (downloadFile(" ./hosts.json", 1024, downloadLink)) {
+                    log.setText("SUCCESS!");
+                } else {
+                    log.setText("Error: can not download the \"hosts.json\" file.");
+                }
 
                 // Загрузить файл
             }
@@ -70,7 +73,7 @@ public class LauncherController {
     }
 
     private boolean checkTextFields() {
-        return !pathToWorld.getText().isEmpty() && !pathToGame.getText().isEmpty() && !pathToCloud.getText().isEmpty();
+        return !pathToWorld.getText().isEmpty() && !pathToGame.getText().isEmpty() && !token.getText().isEmpty();
     }
 
     private URL getLink(String base_link, String file) {
@@ -103,5 +106,22 @@ public class LauncherController {
             log.setText(String.format("Error: %s", e.getMessage()));
         }
         return url2;
+    }
+    private boolean downloadFile(String file_name, int buffer_size, URL link) {
+        try {
+            BufferedInputStream in = new BufferedInputStream(link.openStream());
+            FileOutputStream file_hosts = new FileOutputStream(file_name);
+            byte[] buffer = new byte[buffer_size];
+            int bytes_read;
+            while ((bytes_read = in.read(buffer, 0, buffer_size)) != -1) {
+                file_hosts.write(buffer, 0, bytes_read);
+            }
+            in.close();
+            file_hosts.close();
+        } catch (IOException e) {
+            log.setText(e.getMessage());
+            return false;
+        }
+        return true;
     }
 }
