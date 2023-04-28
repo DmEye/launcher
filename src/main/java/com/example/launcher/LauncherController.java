@@ -2,20 +2,19 @@ package com.example.launcher;
 
 import com.google.gson.reflect.TypeToken;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import com.google.gson.Gson;
 
 public class LauncherController {
-    @FXML
-    private Label log;
     @FXML
     private TextField pathToWorld;
     @FXML
@@ -48,12 +47,12 @@ public class LauncherController {
                         }
                         hosts_reader.close();
                     } catch (IOException e) {
-                        log.setText(e.getMessage());
+                        System.out.println(e.getMessage() + "1");
                     }
                     if (this.current_host_number == -1) {
-                        log.setText("Указанный никнейм не существует.");
+                        System.out.println("Указанный никнейм не существует.");
                     } else {
-                        log.setText("Ваш id - " + this.current_host_number.toString());
+                        System.out.println("Ваш id - " + this.current_host_number.toString());
                     }
 
                     // Загрузить <номер>.json
@@ -66,13 +65,43 @@ public class LauncherController {
                         writer.write(this.parser.toJson(tmst));
                         writer.close();
                     } catch (IOException e) {
-                        log.setText(e.getMessage());
+                        System.out.println(e.getMessage() + "QWE");
                     }
                     URL uploadLink = this.getLink(this.link_to_upload, file_name);
                     if (this.uploadFile(file_name, 1024, uploadLink)) {
-                        log.setText("SUCCESS!");
+                        File current_host_number_file = new File(file_name);
+                        if (current_host_number_file.delete()) {
+                            System.out.println("SUCCESS!");
+                            // Try to download other's files
+                            HashMap<Integer, LocalDate> downloads = new HashMap<Integer, LocalDate>();
+                            try {
+                                Reader hosts_reader = new FileReader("hosts.json");
+                                HashMap<Integer, HostInfo> data = parser.fromJson(hosts_reader, this.listOfHostsType);
+                                for (Map.Entry<Integer, HostInfo> it : data.entrySet()) {
+                                    String other_file_name = it.getKey().toString() + ".json";
+                                    downloadLink = this.getLink(this.link_to_download, other_file_name);
+                                    System.out.println(other_file_name);
+                                    if (downloadLink != null) {
+                                        if (this.downloadFile(other_file_name, 1024, downloadLink)) {
+                                            FileReader reader = new FileReader(other_file_name);
+                                            TimestampInfo timestampInfo = parser.fromJson(reader, TimestampInfo.class);
+                                            reader.close();
+                                            DateTimeFormatter sdf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+                                            downloads.put(it.getKey(), LocalDate.parse(timestampInfo.timestamp, sdf));
+                                        }
+                                    }
+                                }
+                                hosts_reader.close();
+                            } catch (IOException e) {
+                                System.out.println(e.getMessage());
+                            }
+
+                            for (Map.Entry<Integer, LocalDate> it : downloads.entrySet()) {
+                                System.out.println(it.getKey().toString() + it.getValue().toString());
+                            }
+                        }
                     } else {
-                        log.setText("Failed to upload!");
+                        System.out.println("Failed to upload!");
                     }
                 }
             }
@@ -95,20 +124,20 @@ public class LauncherController {
                         break;
                     }
                     default: {
-                        log.setText("Не знаю такой опреационной ситсемы!");
+                        System.out.println("Не знаю такой опреационной ситсемы!");
                     }
                 }
                 if (pb != null) {
                     try {
                         this.game = pb.start();
                     } catch (IOException e) {
-                        log.setText(e.getMessage());
+                        System.out.println(e.getMessage());
                     }
                 } else {
-                    log.setText("Не удалось построить процесс!");
+                    System.out.println("Не удалось построить процесс!");
                 }
             } else {
-                log.setText("Папка не существует!");
+                System.out.println("Папка не существует!");
             }
         }
     }
@@ -140,11 +169,11 @@ public class LauncherController {
                 Link l = parser.fromJson(input_line, Link.class);
                 url2 = new URL(l.href);
             } else {
-                log.setText(String.format("Error: %d", status));
+                System.out.println(String.format("Error: %d", status));
             }
             con.disconnect();
         } catch (Exception e) {
-            log.setText(String.format("Error: %s", e.getMessage()));
+            System.out.println(String.format("Error: %s", e.getMessage()));
         }
         return url2;
     }
@@ -160,7 +189,7 @@ public class LauncherController {
             in.close();
             file_hosts.close();
         } catch (IOException e) {
-            log.setText(e.getMessage());
+            System.out.println(e.getMessage() + "ASD");
             return false;
         }
         return true;
@@ -180,9 +209,11 @@ public class LauncherController {
             }
             number_file.close();
             out.close();
+
+            int status = con.getResponseCode();
             con.disconnect();
         } catch (IOException e) {
-            log.setText(e.getMessage());
+            System.out.println(e.getMessage() + "FHF");
             return false;
         }
         return true;

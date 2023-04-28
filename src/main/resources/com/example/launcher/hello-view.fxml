@@ -13,7 +13,6 @@
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
 
-    <Label fx:id="log" text="LOG: "/>
     <Label text="Прозвище:"/>
     <TextField fx:id="nickName"/>
     <Label text="Token:"/>
