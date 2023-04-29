@@ -2,11 +2,13 @@ package com.example.launcher;
 
 import com.google.gson.reflect.TypeToken;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +31,7 @@ public class LauncherController {
     private final Gson parser = new Gson();
     private Type listOfHostsType = new TypeToken<HashMap<Integer, HostInfo>>(){}.getType();
     private Integer current_host_number = -1;
+    private Integer active_host_number = -1;
     @FXML
     protected void onButtonBecomeHost() {
         if (checkTextFields()) {
@@ -53,55 +56,88 @@ public class LauncherController {
                         System.out.println("Указанный никнейм не существует.");
                     } else {
                         System.out.println("Ваш id - " + this.current_host_number.toString());
-                    }
-
-                    // Загрузить <номер>.json
-                    String file_name = this.current_host_number.toString() + ".json";
-                    try {
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(file_name));
-                        Date date_now = new Date();
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-                        TimestampInfo tmst = new TimestampInfo(sdf.format(date_now));
-                        writer.write(this.parser.toJson(tmst));
-                        writer.close();
-                    } catch (IOException e) {
-                        System.out.println(e.getMessage() + "QWE");
-                    }
-                    URL uploadLink = this.getLink(this.link_to_upload, file_name);
-                    if (this.uploadFile(file_name, 1024, uploadLink)) {
-                        File current_host_number_file = new File(file_name);
-                        if (current_host_number_file.delete()) {
-                            System.out.println("SUCCESS!");
-                            // Try to download other's files
-                            HashMap<Integer, LocalDate> downloads = new HashMap<Integer, LocalDate>();
-                            try {
-                                Reader hosts_reader = new FileReader("hosts.json");
-                                HashMap<Integer, HostInfo> data = parser.fromJson(hosts_reader, this.listOfHostsType);
-                                for (Map.Entry<Integer, HostInfo> it : data.entrySet()) {
-                                    String other_file_name = it.getKey().toString() + ".json";
-                                    downloadLink = this.getLink(this.link_to_download, other_file_name);
-                                    System.out.println(other_file_name);
-                                    if (downloadLink != null) {
-                                        if (this.downloadFile(other_file_name, 1024, downloadLink)) {
-                                            FileReader reader = new FileReader(other_file_name);
-                                            TimestampInfo timestampInfo = parser.fromJson(reader, TimestampInfo.class);
-                                            reader.close();
-                                            DateTimeFormatter sdf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-                                            downloads.put(it.getKey(), LocalDate.parse(timestampInfo.timestamp, sdf));
+                        // Загрузить <номер>.json
+                        String file_name = this.current_host_number.toString() + ".json";
+                        try {
+                            BufferedWriter writer = new BufferedWriter(new FileWriter(file_name));
+                            Date date_now = new Date();
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+                            TimestampInfo tmst = new TimestampInfo(sdf.format(date_now));
+                            writer.write(this.parser.toJson(tmst));
+                            writer.close();
+                        } catch (IOException e) {
+                            System.out.println(e.getMessage() + "QWE");
+                        }
+                        URL uploadLink = this.getLink(this.link_to_upload, file_name);
+                        if (this.uploadFile(file_name, 1024, uploadLink)) {
+                            File current_host_number_file = new File(file_name);
+                            if (current_host_number_file.delete()) {
+                                // Try to download other's files
+                                HashMap<Integer, Date> downloads = new HashMap<Integer, Date>();
+                                try {
+                                    Reader hosts_reader = new FileReader("hosts.json");
+                                    HashMap<Integer, HostInfo> data = parser.fromJson(hosts_reader, this.listOfHostsType);
+                                    for (Map.Entry<Integer, HostInfo> it : data.entrySet()) {
+                                        String other_file_name = it.getKey().toString() + ".json";
+                                        downloadLink = this.getLink(this.link_to_download, other_file_name);
+                                        System.out.println(other_file_name);
+                                        if (downloadLink != null) {
+                                            if (this.downloadFile(other_file_name, 1024, downloadLink)) {
+                                                FileReader reader = new FileReader(other_file_name);
+                                                TimestampInfo timestampInfo = parser.fromJson(reader, TimestampInfo.class);
+                                                reader.close();
+                                                SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+                                                Date date = sdf.parse(timestampInfo.timestamp);
+                                                downloads.put(it.getKey(), date);
+                                            }
                                         }
                                     }
+                                    hosts_reader.close();
+                                } catch (IOException e) {
+                                    System.out.println(e.getMessage());
+                                } catch (ParseException e) {
+                                    System.out.println(e.getMessage() + " Parse");
                                 }
-                                hosts_reader.close();
-                            } catch (IOException e) {
-                                System.out.println(e.getMessage());
+                                // Поиск самой старой даты загрузки
+                                int i = 0;
+                                Date oldest = null;
+                                for (Map.Entry<Integer, Date> it : downloads.entrySet()) {
+                                    if (i == 0) {
+                                        oldest = it.getValue();
+                                        this.active_host_number = it.getKey();
+                                        i++;
+                                    } else {
+                                        if (oldest.after(it.getValue())) {
+                                            oldest = it.getValue();
+                                            this.active_host_number = it.getKey();
+                                        }
+                                    }
+                                    System.out.println(it.getKey().toString() + it.getValue().toString());
+                                }
+                                // Вывод сообщения о том, кто есть хост
+                                if (Objects.equals(this.active_host_number, this.current_host_number)) {
+                                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                    alert.setTitle("launcher");
+                                    alert.setContentText("Вы - хост!");
+                                    alert.show();
+                                } else {
+                                    try {
+                                        Reader hosts_reader = new FileReader("hosts.json");
+                                        HashMap<Integer, HostInfo> data = parser.fromJson(hosts_reader, this.listOfHostsType);
+                                        String active_host_name = data.get(this.active_host_number).nick_name;
+                                        hosts_reader.close();
+                                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                        alert.setTitle("launcher");
+                                        alert.setContentText(active_host_name + " - хост!");
+                                        alert.show();
+                                    } catch (IOException e) {
+                                        System.out.println(e.getMessage() + "1");
+                                    }
+                                }
                             }
-
-                            for (Map.Entry<Integer, LocalDate> it : downloads.entrySet()) {
-                                System.out.println(it.getKey().toString() + it.getValue().toString());
-                            }
+                        } else {
+                            System.out.println("Failed to upload!");
                         }
-                    } else {
-                        System.out.println("Failed to upload!");
                     }
                 }
             }
